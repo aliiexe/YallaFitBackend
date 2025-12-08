@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\abour\\Documents\\EMSI\\.NET\\Projects\\YallaFit\\YallaFit\\YallaFit.csproj": {}
+    "C:\\Users\\abour\\.gemini\\antigravity\\scratch\\YallaFit\\YallaFitBackend\\YallaFit\\YallaFit.csproj": {}
   },
   "projects": {
-    "C:\\Users\\abour\\Documents\\EMSI\\.NET\\Projects\\YallaFit\\YallaFit\\YallaFit.csproj": {
+    "C:\\Users\\abour\\.gemini\\antigravity\\scratch\\YallaFit\\YallaFitBackend\\YallaFit\\YallaFit.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\abour\\Documents\\EMSI\\.NET\\Projects\\YallaFit\\YallaFit\\YallaFit.csproj",
+        "projectUniqueName": "C:\\Users\\abour\\.gemini\\antigravity\\scratch\\YallaFit\\YallaFitBackend\\YallaFit\\YallaFit.csproj",
         "projectName": "YallaFit",
-        "projectPath": "C:\\Users\\abour\\Documents\\EMSI\\.NET\\Projects\\YallaFit\\YallaFit\\YallaFit.csproj",
+        "projectPath": "C:\\Users\\abour\\.gemini\\antigravity\\scratch\\YallaFit\\YallaFitBackend\\YallaFit\\YallaFit.csproj",
         "packagesPath": "C:\\Users\\abour\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\abour\\Documents\\EMSI\\.NET\\Projects\\YallaFit\\YallaFit\\obj\\",
+        "outputPath": "C:\\Users\\abour\\.gemini\\antigravity\\scratch\\YallaFit\\YallaFitBackend\\YallaFit\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -49,6 +49,24 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Pomelo.EntityFrameworkCore.MySql": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

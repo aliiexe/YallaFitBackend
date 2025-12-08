@@ -23,6 +23,14 @@ namespace YallaFit.Models
         [Column("muscle_cible")]
         public string? MuscleCible { get; set; }
 
+        [MaxLength(100)]
+        [Column("categorie")]
+        public string? Categorie { get; set; }
+
+        [MaxLength(255)]
+        [Column("muscles_cibles")]
+        public string? MusclesCibles { get; set; }
+
         public ICollection<DetailSeance> DetailSeances { get; set; } = new List<DetailSeance>();
     }
 }

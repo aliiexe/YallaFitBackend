@@ -185,3 +185,12 @@ C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\obj
 C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\obj\Debug\net9.0\YallaFit.pdb
 C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\obj\Debug\net9.0\YallaFit.genruntimeconfig.cache
 C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\obj\Debug\net9.0\ref\YallaFit.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\BCrypt.Net-Next.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\abour\.gemini\antigravity\scratch\YallaFit\YallaFitBackend\YallaFit\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll

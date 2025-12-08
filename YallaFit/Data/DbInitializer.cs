@@ -17,7 +17,7 @@ namespace YallaFit.Data
             {
                 NomComplet = "Admin YallaFit",
                 Email = "admin@yallafit.com",
-                MotDePasse = "Admin123!",
+                MotDePasse = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
                 Role = "Admin"
             };
             context.Utilisateurs.Add(adminUser);

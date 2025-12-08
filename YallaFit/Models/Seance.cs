@@ -23,7 +23,6 @@ namespace YallaFit.Models
         [Column("jour_semaine")]
         public int JourSemaine { get; set; } // 1-7 for Monday-Sunday
 
-        // Navigation properties
         [ForeignKey("ProgrammeId")]
         public Programme Programme { get; set; } = null!;
 

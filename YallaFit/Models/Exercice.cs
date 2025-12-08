@@ -23,7 +23,6 @@ namespace YallaFit.Models
         [Column("muscle_cible")]
         public string? MuscleCible { get; set; }
 
-        // Navigation property
         public ICollection<DetailSeance> DetailSeances { get; set; } = new List<DetailSeance>();
     }
 }

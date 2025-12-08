@@ -26,7 +26,6 @@ namespace YallaFit.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure Utilisateur
             modelBuilder.Entity<Utilisateur>(entity =>
             {
                 entity.HasIndex(e => e.Email).IsUnique();
@@ -37,7 +36,6 @@ namespace YallaFit.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Configure Programme
             modelBuilder.Entity<Programme>(entity =>
             {
                 entity.HasOne(p => p.Coach)
@@ -67,7 +65,6 @@ namespace YallaFit.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Configure PlanNutrition
             modelBuilder.Entity<PlanNutrition>(entity =>
             {
                 entity.HasOne(pn => pn.Sportif)
@@ -108,7 +105,6 @@ namespace YallaFit.Data
                 entity.HasIndex(b => new { b.SportifId, b.DateMesure });
             });
 
-            // Configure decimal precision for float fields
             modelBuilder.Entity<Aliment>(entity =>
             {
                 entity.Property(a => a.Proteines100g).HasPrecision(5, 2);

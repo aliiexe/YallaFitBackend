@@ -38,7 +38,6 @@ namespace YallaFit.Models
         [Column("est_actif")]
         public bool EstActif { get; set; } = true;
 
-        // Navigation properties
         [ForeignKey("SportifId")]
         public Utilisateur Sportif { get; set; } = null!;
 

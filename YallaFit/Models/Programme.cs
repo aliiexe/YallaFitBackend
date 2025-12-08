@@ -23,7 +23,6 @@ namespace YallaFit.Models
         [Column("duree_semaines")]
         public int DureeSemaines { get; set; }
 
-        // Navigation properties
         [ForeignKey("CoachId")]
         public Utilisateur Coach { get; set; } = null!;
 

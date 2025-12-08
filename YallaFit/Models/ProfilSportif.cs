@@ -37,7 +37,6 @@ namespace YallaFit.Models
         [Column("problemes_sante")]
         public string? ProblemesSante { get; set; }
 
-        // Navigation property
         [ForeignKey("UserId")]
         public Utilisateur Utilisateur { get; set; } = null!;
     }

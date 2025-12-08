@@ -18,7 +18,6 @@ namespace YallaFit.Models
         [Column("quantite_grammes")]
         public int QuantiteGrammes { get; set; }
 
-        // Navigation properties
         [ForeignKey("RepasId")]
         public Repas Repas { get; set; } = null!;
 

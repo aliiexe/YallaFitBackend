@@ -28,7 +28,6 @@ namespace YallaFit.Models
         [Column("tour_de_taille_cm")]
         public float? TourDeTailleCm { get; set; }
 
-        // Navigation property
         [ForeignKey("SportifId")]
         public Utilisateur Sportif { get; set; } = null!;
     }

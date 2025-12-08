@@ -23,7 +23,6 @@ namespace YallaFit.Models
         [Column("heure_prevue")]
         public TimeSpan HeurePrevue { get; set; }
 
-        // Navigation properties
         [ForeignKey("PlanId")]
         public PlanNutrition Plan { get; set; } = null!;
 

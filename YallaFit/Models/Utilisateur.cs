@@ -16,7 +16,7 @@ namespace YallaFit.Models
         public string NomComplet { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(191)]  // Reduced for MySQL utf8mb4 unique index compatibility
+        [MaxLength(191)]
         [EmailAddress]
         [Column("email")]
         public string Email { get; set; } = string.Empty;
@@ -29,9 +29,8 @@ namespace YallaFit.Models
         [Required]
         [MaxLength(50)]
         [Column("role")]
-        public string Role { get; set; } = "Sportif"; // Default role
+        public string Role { get; set; } = "Sportif";
 
-        // Navigation properties
         public ProfilSportif? ProfilSportif { get; set; }
         public ICollection<Programme> ProgrammesCreated { get; set; } = new List<Programme>();
         public ICollection<PlanNutrition> PlansNutrition { get; set; } = new List<PlanNutrition>();

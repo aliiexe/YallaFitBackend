@@ -25,7 +25,6 @@ namespace YallaFit.Models
         [Column("poids_conseille")]
         public float? PoidsConseille { get; set; }
 
-        // Navigation properties
         [ForeignKey("SeanceId")]
         public Seance Seance { get; set; } = null!;
 

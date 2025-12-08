@@ -31,7 +31,6 @@ namespace YallaFit.Models
         [Column("lipides_100g")]
         public float Lipides100g { get; set; }
 
-        // Navigation property
         public ICollection<CompositionRepas> CompositionRepas { get; set; } = new List<CompositionRepas>();
     }
 }

@@ -68,11 +68,14 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<YallaFitDbContext>();
         DbInitializer.Initialize(context);
+        Console.WriteLine("✓ Database initialized successfully");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        logger.LogError(ex, "❌ An error occurred while seeding the database. Make sure MySQL is running.");
+        Console.WriteLine($"\n❌ ERROR: {ex.Message}");
+        Console.WriteLine("Make sure MySQL service is running (wampmysqld64)\n");
     }
 }
 

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("YallaFit")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1a80830eb90f98588ad208cbb1f4dccb52a21028")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c663ccfaabb66986e5f28c8d773627a48f515960")]
 [assembly: System.Reflection.AssemblyProductAttribute("YallaFit")]
 [assembly: System.Reflection.AssemblyTitleAttribute("YallaFit")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

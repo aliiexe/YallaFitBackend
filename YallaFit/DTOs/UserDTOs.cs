@@ -44,4 +44,20 @@ namespace YallaFit.DTOs
         public string CurrentPassword { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
     }
+
+    public class CreateUserDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string NomComplet { get; set; } = string.Empty;
+        public string MotDePasse { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+    }
+
+    public class UpdateUserDto
+    {
+        public string? Email { get; set; }
+        public string? NomComplet { get; set; }
+        public string? Role { get; set; }
+        public string? MotDePasse { get; set; }
+    }
 }

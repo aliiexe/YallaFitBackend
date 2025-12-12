@@ -276,5 +276,166 @@ namespace YallaFit.Controllers
                 return StatusCode(500, new { message = "Erreur lors de la récupération des utilisateurs", error = ex.Message });
             }
         }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDto dto)
+        {
+            try
+            {
+                // Validate input
+                if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.NomComplet) ||
+                    string.IsNullOrWhiteSpace(dto.MotDePasse) || string.IsNullOrWhiteSpace(dto.Role))
+                {
+                    return BadRequest(new { message = "Tous les champs sont requis" });
+                }
+
+                // Check if email already exists
+                var existingUser = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email == dto.Email);
+                if (existingUser != null)
+                {
+                    return BadRequest(new { message = "Cet email est déjà utilisé" });
+                }
+
+                // Validate role
+                var validRoles = new[] { "Admin", "Coach", "Sportif" };
+                if (!validRoles.Contains(dto.Role))
+                {
+                    return BadRequest(new { message = "Rôle invalide" });
+                }
+
+                // Create new user
+                var newUser = new Utilisateur
+                {
+                    Email = dto.Email,
+                    NomComplet = dto.NomComplet,
+                    MotDePasse = BCrypt.Net.BCrypt.HashPassword(dto.MotDePasse),
+                    Role = dto.Role
+                };
+
+                _context.Utilisateurs.Add(newUser);
+                await _context.SaveChangesAsync();
+
+                var userProfile = new UserProfileDto
+                {
+                    Id = newUser.Id,
+                    Email = newUser.Email,
+                    NomComplet = newUser.NomComplet,
+                    Role = newUser.Role
+                };
+
+                return Ok(userProfile);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur lors de la création de l'utilisateur", error = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
+        {
+            try
+            {
+                var user = await _context.Utilisateurs.FindAsync(id);
+                if (user == null)
+                {
+                    return NotFound(new { message = "Utilisateur non trouvé" });
+                }
+
+                // Update email if provided
+                if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != user.Email)
+                {
+                    // Check if new email already exists
+                    var existingUser = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email == dto.Email && u.Id != id);
+                    if (existingUser != null)
+                    {
+                        return BadRequest(new { message = "Cet email est déjà utilisé" });
+                    }
+                    user.Email = dto.Email;
+                }
+
+                // Update name if provided
+                if (!string.IsNullOrWhiteSpace(dto.NomComplet))
+                {
+                    user.NomComplet = dto.NomComplet;
+                }
+
+                // Update role if provided
+                if (!string.IsNullOrWhiteSpace(dto.Role))
+                {
+                    var validRoles = new[] { "Admin", "Coach", "Sportif" };
+                    if (!validRoles.Contains(dto.Role))
+                    {
+                        return BadRequest(new { message = "Rôle invalide" });
+                    }
+                    user.Role = dto.Role;
+                }
+
+                // Update password if provided
+                if (!string.IsNullOrWhiteSpace(dto.MotDePasse))
+                {
+                    user.MotDePasse = BCrypt.Net.BCrypt.HashPassword(dto.MotDePasse);
+                }
+
+                await _context.SaveChangesAsync();
+
+                var userProfile = new UserProfileDto
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    NomComplet = user.NomComplet,
+                    Role = user.Role
+                };
+
+                return Ok(userProfile);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur lors de la mise à jour de l'utilisateur", error = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                
+                // Prevent self-deletion
+                if (id == currentUserId)
+                {
+                    return BadRequest(new { message = "Vous ne pouvez pas supprimer votre propre compte" });
+                }
+
+                var user = await _context.Utilisateurs
+                    .Include(u => u.ProfilSportif)
+                    .FirstOrDefaultAsync(u => u.Id == id);
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "Utilisateur non trouvé" });
+                }
+
+                // Delete related profile if exists
+                if (user.ProfilSportif != null)
+                {
+                    _context.ProfilsSportifs.Remove(user.ProfilSportif);
+                }
+
+                // Delete user
+                _context.Utilisateurs.Remove(user);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Utilisateur supprimé avec succès" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur lors de la suppression de l'utilisateur", error = ex.Message });
+            }
+        }
     }
 }

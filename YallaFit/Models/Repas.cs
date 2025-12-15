@@ -23,6 +23,12 @@ namespace YallaFit.Models
         [Column("heure_prevue")]
         public TimeSpan HeurePrevue { get; set; }
 
+        [Column("explication")]
+        public string? Explication { get; set; }
+
+        [Column("benefices_nutritionnels")]
+        public string? BeneficesNutritionnels { get; set; }
+
         [ForeignKey("PlanId")]
         public PlanNutrition Plan { get; set; } = null!;
 

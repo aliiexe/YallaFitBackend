@@ -25,6 +25,7 @@ namespace YallaFit.Data
         public DbSet<TrainingSession> TrainingSessions { get; set; }
         public DbSet<TrainingExercise> TrainingExercises { get; set; }
         public DbSet<TrainingSet> TrainingSets { get; set; }
+        public DbSet<AnalyseRepasPhoto> AnalysesRepasPhoto { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

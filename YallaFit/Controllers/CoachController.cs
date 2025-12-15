@@ -26,31 +26,46 @@ namespace YallaFit.Controllers
             return int.Parse(userIdClaim ?? "0");
         }
 
-        // GET: api/coach/athletes
+        // GET: api/coach/athletes?filter=my or filter=all
         [HttpGet("athletes")]
-        public async Task<IActionResult> GetMyAthletes()
+        public async Task<IActionResult> GetMyAthletes([FromQuery] string? filter = "all")
         {
             try
             {
                 var coachId = GetCurrentUserId();
-                
-                // Get all athletes who have programmes created by this coach
-                // Since we don't have a direct coach-athlete relationship, we'll get athletes
-                // who have active programmes from this coach
-                var programmes = await _context.Programmes
-                    .Where(p => p.CoachId == coachId)
-                    .Select(p => p.Id)
-                    .ToListAsync();
 
-                // For now, we'll return all sportifs as potential athletes
-                // In a real system, you'd have a coach-athlete assignment table
-                var allSportifs = await _context.Utilisateurs
-                    .Where(u => u.Role == "Sportif")
-                    .Include(u => u.ProfilSportif)
-                    .ToListAsync();
+                List<Utilisateur> sportifs;
+
+                if (filter == "my")
+                {
+                    // Get only athletes who have active enrollments in this coach's programs
+                    var coachProgramIds = await _context.Programmes
+                        .Where(p => p.CoachId == coachId)
+                        .Select(p => p.Id)
+                        .ToListAsync();
+
+                    var athleteIds = await _context.ProgrammeEnrollments
+                        .Where(e => e.IsActive && coachProgramIds.Contains(e.ProgrammeId))
+                        .Select(e => e.SportifId)
+                        .Distinct()
+                        .ToListAsync();
+
+                    sportifs = await _context.Utilisateurs
+                        .Where(u => athleteIds.Contains(u.Id))
+                        .Include(u => u.ProfilSportif)
+                        .ToListAsync();
+                }
+                else
+                {
+                    // Get all sportifs (default behavior)
+                    sportifs = await _context.Utilisateurs
+                        .Where(u => u.Role == "Sportif")
+                        .Include(u => u.ProfilSportif)
+                        .ToListAsync();
+                }
 
                 var athletes = new List<object>();
-                foreach (var sportif in allSportifs)
+                foreach (var sportif in sportifs)
                 {
                     var latestBiometric = await _context.BiometriesActuelles
                         .Where(b => b.SportifId == sportif.Id)
@@ -190,23 +205,32 @@ namespace YallaFit.Controllers
                     return Forbid();
                 }
 
-                // Get the athlete's profile
-                var athleteProfile = await _context.ProfilsSportifs
-                    .Include(p => p.Utilisateur)
-                    .FirstOrDefaultAsync(p => p.UserId == dto.AthleteId);
-
-                if (athleteProfile == null)
+                // Verify athlete exists and is a Sportif
+                var athlete = await _context.Utilisateurs.FindAsync(dto.AthleteId);
+                if (athlete == null || athlete.Role != "Sportif")
                 {
-                    return NotFound(new { message = "Profil athlète non trouvé" });
+                    return NotFound(new { message = "Athlète non trouvé" });
                 }
 
-                if (athleteProfile.Utilisateur.Role != "Sportif")
+                // Check if already enrolled
+                var existingEnrollment = await _context.ProgrammeEnrollments
+                    .FirstOrDefaultAsync(e => e.SportifId == dto.AthleteId && e.ProgrammeId == dto.ProgramId && e.IsActive);
+
+                if (existingEnrollment != null)
                 {
-                    return BadRequest(new { message = "L'utilisateur cible n'est pas un sportif" });
+                    return BadRequest(new { message = "L'athlète est déjà inscrit à ce programme" });
                 }
 
-                // Update assignment
-                athleteProfile.ProgrammeId = dto.ProgramId;
+                // Create new enrollment
+                var enrollment = new ProgrammeEnrollment
+                {
+                    SportifId = dto.AthleteId,
+                    ProgrammeId = dto.ProgramId,
+                    EnrolledAt = DateTime.UtcNow,
+                    IsActive = true
+                };
+
+                _context.ProgrammeEnrollments.Add(enrollment);
                 await _context.SaveChangesAsync();
 
                 return Ok(new { message = "Programme assigné avec succès" });

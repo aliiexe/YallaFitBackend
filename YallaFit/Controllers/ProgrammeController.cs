@@ -126,6 +126,45 @@ namespace YallaFit.Controllers
             }
         }
 
+        // GET: api/programme/my-enrolled
+        [HttpGet("my-enrolled")]
+        [Authorize(Roles = "Sportif")]
+        public async Task<IActionResult> GetMyEnrolledPrograms()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var enrolledPrograms = await _context.ProgrammeEnrollments
+                    .Where(e => e.SportifId == userId && e.IsActive)
+                    .Include(e => e.Programme)
+                    .ThenInclude(p => p.Coach)
+                    .Include(e => e.Programme.Seances)
+                    .Select(e => new
+                    {
+                        EnrollmentId = e.Id,
+                        EnrolledAt = e.EnrolledAt,
+                        Programme = new ProgrammeListDto
+                        {
+                            Id = e.Programme.Id,
+                            Titre = e.Programme.Titre,
+                            DureeSemaines = e.Programme.DureeSemaines,
+                            CoachId = e.Programme.CoachId,
+                            CoachName = e.Programme.Coach.NomComplet,
+                            SessionCount = e.Programme.Seances.Count,
+                            IsPublic = e.Programme.IsPublic
+                        }
+                    })
+                    .ToListAsync();
+
+                return Ok(enrolledPrograms);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur lors de la récupération des programmes inscrits", error = ex.Message });
+            }
+        }
+
         // GET: api/programme/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProgramme(int id)

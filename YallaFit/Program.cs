@@ -34,6 +34,12 @@ builder.Services.AddCors(options =>
 // Register JWT Service
 builder.Services.AddScoped<YallaFit.Services.IJwtService, YallaFit.Services.JwtService>();
 
+// Register Mistral AI Service with HttpClient
+builder.Services.AddHttpClient<YallaFit.Services.MistralAIService>();
+
+// Register Mistral Vision Service with HttpClient
+builder.Services.AddHttpClient<YallaFit.Services.MistralVisionService>();
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSettings["Key"];

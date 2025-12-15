@@ -38,6 +38,12 @@ namespace YallaFit.Models
         [Column("est_actif")]
         public bool EstActif { get; set; } = true;
 
+        [Column("analyse_globale")]
+        public string? AnalyseGlobale { get; set; }
+
+        [Column("conseils_personnalises")]
+        public string? ConseilsPersonnalises { get; set; }
+
         [ForeignKey("SportifId")]
         public Utilisateur Sportif { get; set; } = null!;
 

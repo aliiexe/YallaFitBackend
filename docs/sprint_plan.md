@@ -116,73 +116,78 @@
 
 ---
 
-## Sprint 2: Authentication & User Management
+## Sprint 2: Authentication & User Management 🔄 MOSTLY COMPLETE
 **Duration**: 1 week  
 **Goal**: Implement secure user authentication and profile management
 
 ### Tasks
 
 #### 2.1 Authentication Setup
-- [ ] Install JWT authentication packages
+- [x] Install JWT authentication packages
   - `Microsoft.AspNetCore.Authentication.JwtBearer`
   - `System.IdentityModel.Tokens.Jwt`
-- [ ] Configure JWT settings in `appsettings.json`
-- [ ] Implement password hashing (BCrypt or ASP.NET Identity)
-- [ ] Create JWT token generation service
+- [x] Configure JWT settings in `appsettings.json`
+- [x] Implement password hashing (BCrypt or ASP.NET Identity)
+- [x] Create JWT token generation service
 
 #### 2.2 User Registration
-- [ ] Create `AuthController`
-- [ ] Implement POST `/api/auth/register` endpoint
+- [x] Create `AuthController`
+- [x] Implement POST `/api/auth/register` endpoint
   - Validate email format
   - Check email uniqueness
   - Hash password
   - Create user with default role
-- [ ] Create DTOs for registration request/response
-- [ ] Add validation attributes
+- [x] Create DTOs for registration request/response
+- [x] Add validation attributes
 
 #### 2.3 User Login
-- [ ] Implement POST `/api/auth/login` endpoint
+- [x] Implement POST `/api/auth/login` endpoint
   - Validate credentials
   - Generate JWT token
   - Return user info + token
-- [ ] Create login DTOs
-- [ ] Implement refresh token mechanism (optional)
+- [x] Create login DTOs
+- [x] Implement refresh token mechanism (optional)
 
 #### 2.4 User Profile Management
-- [ ] Create `UserController`
-- [ ] Implement GET `/api/users/profile` (get current user)
-- [ ] Implement PUT `/api/users/profile` (update profile)
-- [ ] Implement GET `/api/users/{id}/sportif-profile` (get athletic profile)
-- [ ] Implement PUT `/api/users/{id}/sportif-profile` (update athletic profile)
+- [x] Create `UserController`
+- [x] Implement GET `/api/users/profile` (get current user)
+- [x] Implement PUT `/api/users/profile` (update profile)
+- [x] Implement GET `/api/users/{id}/sportif-profile` (get athletic profile)
+- [x] Implement PUT `/api/users/{id}/sportif-profile` (update athletic profile)
 
 #### 2.5 Role-Based Authorization
-- [ ] Configure authorization policies (Sportif, Coach, Admin)
-- [ ] Add `[Authorize]` attributes to controllers
-- [ ] Implement role-based access control
-- [ ] Test authorization for different roles
+- [x] Configure authorization policies (Sportif, Coach, Admin)
+- [x] Add `[Authorize]` attributes to controllers
+- [x] Implement role-based access control
+- [x] Test authorization for different roles
 
 **Deliverables**:
-- ✅ User registration working
-- ✅ User login with JWT tokens
-- ✅ Profile management endpoints
-- ✅ Role-based authorization implemented
+- ✅ User registration working (Backend)
+- ✅ User login with JWT tokens (Backend)
+- ✅ Profile management endpoints (Backend)
+- ✅ Role-based authorization implemented (Backend)
+- ✅ Basic login page (Frontend)
+- ✅ Basic dashboards for roles (Frontend)
+- ⏳ Complete user profile pages (Frontend - Pending)
+- ⏳ Registration page (Frontend - Pending)
 
 ---
 
-## Sprint 3: Sports Program Management
+## Sprint 3: Sports Program Management 🔄 IN PROGRESS
 **Duration**: 1.5 weeks  
 **Goal**: Implement training program creation and session tracking
 
 ### Tasks
 
-#### 3.1 Exercise Library Management
-- [ ] Create `ExerciseController`
-- [ ] Implement GET `/api/exercises` (list all, with pagination)
-- [ ] Implement GET `/api/exercises/{id}` (get single exercise)
-- [ ] Implement POST `/api/exercises` (create - Admin/Coach only)
-- [ ] Implement PUT `/api/exercises/{id}` (update - Admin/Coach only)
-- [ ] Implement DELETE `/api/exercises/{id}` (delete - Admin only)
-- [ ] Add filtering by muscle group
+#### 3.1 Exercise Library Management ✅ COMPLETE
+- [x] Create `ExerciseController`
+- [x] Implement GET `/api/exercises` (list all, with pagination)
+- [x] Implement GET `/api/exercises/{id}` (get single exercise)
+- [x] Implement POST `/api/exercises` (create - Admin/Coach only)
+- [x] Implement PUT `/api/exercises/{id}` (update - Admin/Coach only)
+- [x] Implement DELETE `/api/exercises/{id}` (delete - Admin only)
+- [x] Add filtering by muscle group
+- [x] **Frontend**: Exercise page with role-based UI controls
 
 #### 3.2 Training Program CRUD
 - [ ] Create `ProgrammeController`
@@ -216,11 +221,11 @@
 - [ ] Track actual vs planned performance
 
 **Deliverables**:
-- ✅ Exercise library fully functional
-- ✅ Program creation and management
-- ✅ Session and exercise detail management
-- ✅ Program assignment to athletes
-- ✅ Workout logging capability
+- ✅ Exercise library fully functional (Backend + Frontend)
+- ⏳ Program creation and management
+- ⏳ Session and exercise detail management
+- ⏳ Program assignment to athletes
+- ⏳ Workout logging capability
 
 ---
 
@@ -515,12 +520,45 @@
 - Migrations applied successfully
 - Seed data populated (admin user, 15 exercises, 27 foods)
 
+🔄 **Sprint 2 MOSTLY COMPLETE** - Authentication & User Management
+- ✅ Backend: JWT authentication, registration, login, profile management
+- ✅ Backend: Role-based authorization (Admin, Coach, Sportif)
+- ✅ Frontend: Login page working
+- ✅ Frontend: Basic dashboards for each role (Admin, Coach, Sportif)
+- ⏳ Frontend: Registration page (NOT DONE)
+- ⏳ Frontend: Profile editing pages (NOT DONE)
+
+🔄 **Sprint 3 STARTED** - Sports Program Management
+- ✅ Exercise Library COMPLETE (Backend + Frontend)
+  - Full CRUD operations for exercises
+  - Role-based UI controls (Admin/Coach can manage, Sportif can view)
+  - Exercise page with sidebar navigation
+- ❌ Training Program Management (NOT STARTED)
+- ❌ Session Management (NOT STARTED)
+- ❌ Program Assignment (NOT STARTED)
+- ❌ Workout Logging (NOT STARTED)
+
 ## Next Steps
 
-**Sprint 2**: Authentication & User Management
-- Implement JWT authentication
-- Create user registration and login endpoints
-- Add role-based authorization
-- Build user profile management
+**Immediate Next Task**: Complete Sprint 3 - Training Program Management
 
-Would you like to proceed with Sprint 1, or would you like any adjustments to this plan?
+### Priority 1: Training Program CRUD (Backend)
+1. Create `ProgrammeController` with full CRUD endpoints
+2. Implement program creation for coaches
+3. Add program listing and filtering
+4. Enable program assignment to athletes
+
+### Priority 2: Program Management UI (Frontend)
+1. Create `/programs` page with list view
+2. Build program creation form
+3. Implement program assignment interface
+4. Show assigned programs on athlete dashboards
+
+### Priority 3: Session Management
+1. Create session CRUD endpoints
+2. Build session detail management (exercises, sets, reps)
+3. Implement workout logging
+
+**Estimated Time**: 1 week to complete Sprint 3
+
+After Sprint 3, you can proceed to Sprint 4 (Nutrition AI Integration) or Sprint 5 (Progress Tracking) based on priorities.

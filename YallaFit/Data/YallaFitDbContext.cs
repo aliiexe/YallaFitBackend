@@ -21,6 +21,10 @@ namespace YallaFit.Data
         public DbSet<Aliment> Aliments { get; set; }
         public DbSet<CompositionRepas> CompositionRepas { get; set; }
         public DbSet<BiometrieActuelle> BiometriesActuelles { get; set; }
+        public DbSet<ProgrammeEnrollment> ProgrammeEnrollments { get; set; }
+        public DbSet<TrainingSession> TrainingSessions { get; set; }
+        public DbSet<TrainingExercise> TrainingExercises { get; set; }
+        public DbSet<TrainingSet> TrainingSets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +38,14 @@ namespace YallaFit.Data
                     .WithOne(p => p.Utilisateur)
                     .HasForeignKey<ProfilSportif>(p => p.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ProfilSportif>(entity =>
+            {
+                entity.HasOne(p => p.Programme)
+                    .WithMany()
+                    .HasForeignKey(p => p.ProgrammeId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<Programme>(entity =>

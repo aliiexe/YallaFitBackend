@@ -23,6 +23,9 @@ namespace YallaFit.Models
         [Column("duree_semaines")]
         public int DureeSemaines { get; set; }
 
+        [Column("is_public")]
+        public bool IsPublic { get; set; } = false;
+
         [ForeignKey("CoachId")]
         public Utilisateur Coach { get; set; } = null!;
 

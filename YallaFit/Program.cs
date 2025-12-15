@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
 builder.Services.AddDbContext<YallaFitDbContext>(options =>
@@ -96,6 +96,10 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
+// Map API controllers (for [ApiController] with [Route] attributes)
+app.MapControllers();
+
+// Map MVC controllers (for Views)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")

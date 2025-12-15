@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using YallaFit.Data;
 
@@ -11,9 +12,11 @@ using YallaFit.Data;
 namespace YallaFit.Migrations
 {
     [DbContext(typeof(YallaFitDbContext))]
-    partial class YallaFitDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251214223141_AddTrainingTrackingTables")]
+    partial class AddTrainingTrackingTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -518,10 +521,6 @@ namespace YallaFit.Migrations
                     b.Property<bool>("Completed")
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("completed");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("longtext")
-                        .HasColumnName("notes");
 
                     b.Property<int>("Reps")
                         .HasColumnType("int")

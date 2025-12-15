@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using YallaFit.Data;
 
@@ -11,9 +12,11 @@ using YallaFit.Data;
 namespace YallaFit.Migrations
 {
     [DbContext(typeof(YallaFitDbContext))]
-    partial class YallaFitDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251213190708_AddCategorieColumn")]
+    partial class AddCategorieColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -280,10 +283,6 @@ namespace YallaFit.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("problemes_sante");
 
-                    b.Property<int?>("ProgrammeId")
-                        .HasColumnType("int")
-                        .HasColumnName("programme_id");
-
                     b.Property<string>("Sexe")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)")
@@ -298,8 +297,6 @@ namespace YallaFit.Migrations
                         .HasColumnName("taille_cm");
 
                     b.HasKey("UserId");
-
-                    b.HasIndex("ProgrammeId");
 
                     b.ToTable("Profil_Sportif");
                 });
@@ -321,10 +318,6 @@ namespace YallaFit.Migrations
                         .HasColumnType("int")
                         .HasColumnName("duree_semaines");
 
-                    b.Property<bool>("IsPublic")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("is_public");
-
                     b.Property<string>("Titre")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -336,40 +329,6 @@ namespace YallaFit.Migrations
                     b.HasIndex("CoachId");
 
                     b.ToTable("Programme");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.ProgrammeEnrollment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("EnrolledAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("enrolled_at");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("is_active");
-
-                    b.Property<int>("ProgrammeId")
-                        .HasColumnType("int")
-                        .HasColumnName("programme_id");
-
-                    b.Property<int>("SportifId")
-                        .HasColumnType("int")
-                        .HasColumnName("sportif_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProgrammeId");
-
-                    b.HasIndex("SportifId");
-
-                    b.ToTable("Programme_Enrollment");
                 });
 
             modelBuilder.Entity("YallaFit.Models.Repas", b =>
@@ -430,120 +389,6 @@ namespace YallaFit.Migrations
                     b.HasIndex("ProgrammeId");
 
                     b.ToTable("Seance");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.TrainingExercise", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ExerciceId")
-                        .HasColumnType("int")
-                        .HasColumnName("exercice_id");
-
-                    b.Property<int>("OrderIndex")
-                        .HasColumnType("int")
-                        .HasColumnName("order_index");
-
-                    b.Property<int>("TrainingSessionId")
-                        .HasColumnType("int")
-                        .HasColumnName("training_session_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExerciceId");
-
-                    b.HasIndex("TrainingSessionId");
-
-                    b.ToTable("Training_Exercise");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.TrainingSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("DateCompleted")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("date_completed");
-
-                    b.Property<int>("DurationMinutes")
-                        .HasColumnType("int")
-                        .HasColumnName("duration_minutes");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("longtext")
-                        .HasColumnName("notes");
-
-                    b.Property<int>("ProgrammeId")
-                        .HasColumnType("int")
-                        .HasColumnName("programme_id");
-
-                    b.Property<int>("SeanceId")
-                        .HasColumnType("int")
-                        .HasColumnName("seance_id");
-
-                    b.Property<int>("SportifId")
-                        .HasColumnType("int")
-                        .HasColumnName("sportif_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProgrammeId");
-
-                    b.HasIndex("SeanceId");
-
-                    b.HasIndex("SportifId");
-
-                    b.ToTable("Training_Session");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.TrainingSet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Completed")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("completed");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("longtext")
-                        .HasColumnName("notes");
-
-                    b.Property<int>("Reps")
-                        .HasColumnType("int")
-                        .HasColumnName("reps");
-
-                    b.Property<int>("SetNumber")
-                        .HasColumnType("int")
-                        .HasColumnName("set_number");
-
-                    b.Property<int>("TrainingExerciseId")
-                        .HasColumnType("int")
-                        .HasColumnName("training_exercise_id");
-
-                    b.Property<decimal?>("WeightKg")
-                        .HasColumnType("decimal(65,30)")
-                        .HasColumnName("weight_kg");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TrainingExerciseId");
-
-                    b.ToTable("Training_Set");
                 });
 
             modelBuilder.Entity("YallaFit.Models.Utilisateur", b =>
@@ -649,18 +494,11 @@ namespace YallaFit.Migrations
 
             modelBuilder.Entity("YallaFit.Models.ProfilSportif", b =>
                 {
-                    b.HasOne("YallaFit.Models.Programme", "Programme")
-                        .WithMany()
-                        .HasForeignKey("ProgrammeId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("YallaFit.Models.Utilisateur", "Utilisateur")
                         .WithOne("ProfilSportif")
                         .HasForeignKey("YallaFit.Models.ProfilSportif", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Programme");
 
                     b.Navigation("Utilisateur");
                 });
@@ -674,25 +512,6 @@ namespace YallaFit.Migrations
                         .IsRequired();
 
                     b.Navigation("Coach");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.ProgrammeEnrollment", b =>
-                {
-                    b.HasOne("YallaFit.Models.Programme", "Programme")
-                        .WithMany()
-                        .HasForeignKey("ProgrammeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("YallaFit.Models.ProfilSportif", "ProfilSportif")
-                        .WithMany()
-                        .HasForeignKey("SportifId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProfilSportif");
-
-                    b.Navigation("Programme");
                 });
 
             modelBuilder.Entity("YallaFit.Models.Repas", b =>
@@ -715,63 +534,6 @@ namespace YallaFit.Migrations
                         .IsRequired();
 
                     b.Navigation("Programme");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.TrainingExercise", b =>
-                {
-                    b.HasOne("YallaFit.Models.Exercice", "Exercice")
-                        .WithMany()
-                        .HasForeignKey("ExerciceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("YallaFit.Models.TrainingSession", "TrainingSession")
-                        .WithMany("TrainingExercises")
-                        .HasForeignKey("TrainingSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Exercice");
-
-                    b.Navigation("TrainingSession");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.TrainingSession", b =>
-                {
-                    b.HasOne("YallaFit.Models.Programme", "Programme")
-                        .WithMany()
-                        .HasForeignKey("ProgrammeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("YallaFit.Models.Seance", "Seance")
-                        .WithMany()
-                        .HasForeignKey("SeanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("YallaFit.Models.ProfilSportif", "ProfilSportif")
-                        .WithMany()
-                        .HasForeignKey("SportifId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProfilSportif");
-
-                    b.Navigation("Programme");
-
-                    b.Navigation("Seance");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.TrainingSet", b =>
-                {
-                    b.HasOne("YallaFit.Models.TrainingExercise", "TrainingExercise")
-                        .WithMany("TrainingSets")
-                        .HasForeignKey("TrainingExerciseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TrainingExercise");
                 });
 
             modelBuilder.Entity("YallaFit.Models.Aliment", b =>
@@ -802,16 +564,6 @@ namespace YallaFit.Migrations
             modelBuilder.Entity("YallaFit.Models.Seance", b =>
                 {
                     b.Navigation("DetailSeances");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.TrainingExercise", b =>
-                {
-                    b.Navigation("TrainingSets");
-                });
-
-            modelBuilder.Entity("YallaFit.Models.TrainingSession", b =>
-                {
-                    b.Navigation("TrainingExercises");
                 });
 
             modelBuilder.Entity("YallaFit.Models.Utilisateur", b =>

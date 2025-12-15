@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using YallaFit.Data;
+using YallaFit.DTOs;
 using YallaFit.Models;
 
 namespace YallaFit.Controllers
@@ -23,7 +24,17 @@ namespace YallaFit.Controllers
         {
             try
             {
-                var exercices = await _context.Exercices.ToListAsync();
+                var exercices = await _context.Exercices
+                    .Select(e => new ExerciceDto
+                    {
+                        Id = e.Id,
+                        Nom = e.Nom,
+                        VideoUrl = e.VideoUrl,
+                        MuscleCible = e.MuscleCible,
+                        Categorie = e.Categorie
+                    })
+                    .ToListAsync();
+
                 return Ok(exercices);
             }
             catch (Exception ex)
@@ -37,7 +48,17 @@ namespace YallaFit.Controllers
         {
             try
             {
-                var exercice = await _context.Exercices.FindAsync(id);
+                var exercice = await _context.Exercices
+                    .Where(e => e.Id == id)
+                    .Select(e => new ExerciceDto
+                    {
+                        Id = e.Id,
+                        Nom = e.Nom,
+                        VideoUrl = e.VideoUrl,
+                        MuscleCible = e.MuscleCible,
+                        Categorie = e.Categorie
+                    })
+                    .FirstOrDefaultAsync();
 
                 if (exercice == null)
                 {
@@ -54,14 +75,37 @@ namespace YallaFit.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin,Coach")]
-        public async Task<IActionResult> CreateExercice([FromBody] Exercice exercice)
+        public async Task<IActionResult> CreateExercice([FromBody] CreateExerciceDto dto)
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(dto.Nom))
+                {
+                    return BadRequest(new { message = "Le nom de l'exercice est requis" });
+                }
+
+                var exercice = new Exercice
+                {
+                    Nom = dto.Nom,
+                    VideoUrl = dto.VideoUrl,
+                    MuscleCible = dto.MuscleCible,
+                    Categorie = dto.Categorie,
+                    MusclesCibles = dto.MuscleCible // For backward compatibility
+                };
+
                 _context.Exercices.Add(exercice);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetExercice), new { id = exercice.Id }, exercice);
+                var result = new ExerciceDto
+                {
+                    Id = exercice.Id,
+                    Nom = exercice.Nom,
+                    VideoUrl = exercice.VideoUrl,
+                    MuscleCible = exercice.MuscleCible,
+                    Categorie = exercice.Categorie
+                };
+
+                return CreatedAtAction(nameof(GetExercice), new { id = exercice.Id }, result);
             }
             catch (Exception ex)
             {
@@ -71,27 +115,44 @@ namespace YallaFit.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin,Coach")]
-        public async Task<IActionResult> UpdateExercice(int id, [FromBody] Exercice exercice)
+        public async Task<IActionResult> UpdateExercice(int id, [FromBody] UpdateExerciceDto dto)
         {
-            if (id != exercice.Id)
-            {
-                return BadRequest(new { message = "ID de l'exercice invalide" });
-            }
-
             try
             {
-                _context.Entry(exercice).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-
-                return Ok(exercice);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await _context.Exercices.AnyAsync(e => e.Id == id))
+                var exercice = await _context.Exercices.FindAsync(id);
+                if (exercice == null)
                 {
                     return NotFound(new { message = "Exercice non trouvé" });
                 }
-                throw;
+
+                // Update only provided fields
+                if (!string.IsNullOrWhiteSpace(dto.Nom))
+                    exercice.Nom = dto.Nom;
+                
+                if (dto.VideoUrl != null)
+                    exercice.VideoUrl = dto.VideoUrl;
+                
+                if (dto.MuscleCible != null)
+                {
+                    exercice.MuscleCible = dto.MuscleCible;
+                    exercice.MusclesCibles = dto.MuscleCible;
+                }
+                
+                if (dto.Categorie != null)
+                    exercice.Categorie = dto.Categorie;
+
+                await _context.SaveChangesAsync();
+
+                var result = new ExerciceDto
+                {
+                    Id = exercice.Id,
+                    Nom = exercice.Nom,
+                    VideoUrl = exercice.VideoUrl,
+                    MuscleCible = exercice.MuscleCible,
+                    Categorie = exercice.Categorie
+                };
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -100,7 +161,7 @@ namespace YallaFit.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Coach")]
         public async Task<IActionResult> DeleteExercice(int id)
         {
             try
@@ -114,7 +175,7 @@ namespace YallaFit.Controllers
                 _context.Exercices.Remove(exercice);
                 await _context.SaveChangesAsync();
 
-                return NoContent();
+                return Ok(new { message = "Exercice supprimé avec succès" });
             }
             catch (Exception ex)
             {
@@ -129,6 +190,14 @@ namespace YallaFit.Controllers
             {
                 var exercices = await _context.Exercices
                     .Where(e => e.Categorie == category)
+                    .Select(e => new ExerciceDto
+                    {
+                        Id = e.Id,
+                        Nom = e.Nom,
+                        VideoUrl = e.VideoUrl,
+                        MuscleCible = e.MuscleCible,
+                        Categorie = e.Categorie
+                    })
                     .ToListAsync();
 
                 return Ok(exercices);
@@ -145,7 +214,15 @@ namespace YallaFit.Controllers
             try
             {
                 var exercices = await _context.Exercices
-                    .Where(e => e.MusclesCibles.Contains(muscle))
+                    .Where(e => e.MusclesCibles != null && e.MusclesCibles.Contains(muscle))
+                    .Select(e => new ExerciceDto
+                    {
+                        Id = e.Id,
+                        Nom = e.Nom,
+                        VideoUrl = e.VideoUrl,
+                        MuscleCible = e.MuscleCible,
+                        Categorie = e.Categorie
+                    })
                     .ToListAsync();
 
                 return Ok(exercices);

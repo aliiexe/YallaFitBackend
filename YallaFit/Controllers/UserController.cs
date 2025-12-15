@@ -146,7 +146,7 @@ namespace YallaFit.Controllers
             {
                 var userId = GetCurrentUserId();
                 var profile = await _context.ProfilsSportifs
-                    .FirstOrDefaultAsync(p => p.SportifId == userId);
+                    .FirstOrDefaultAsync(p => p.UserId == userId);
 
                 if (profile == null)
                 {
@@ -179,45 +179,63 @@ namespace YallaFit.Controllers
             try
             {
                 var userId = GetCurrentUserId();
+                Console.WriteLine($"[DEBUG] UpdateSportifProfile - UserId: {userId}");
+                Console.WriteLine($"[DEBUG] Received DTO - Age: {dto.Age}, Sexe: {dto.Sexe}, Taille: {dto.Taille}");
+                Console.WriteLine($"[DEBUG] Received DTO - NiveauActivite: {dto.NiveauActivite}, ObjectifPrincipal: {dto.ObjectifPrincipal}");
+                Console.WriteLine($"[DEBUG] Received DTO - PreferencesAlim: {dto.PreferencesAlim}, Allergies: {dto.Allergies}");
+                
                 var profile = await _context.ProfilsSportifs
-                    .FirstOrDefaultAsync(p => p.SportifId == userId);
+                    .FirstOrDefaultAsync(p => p.UserId == userId);
 
                 if (profile == null)
                 {
+                    Console.WriteLine($"[DEBUG] Profile not found for user {userId}, creating new profile");
                     // Create new profile
                     profile = new ProfilSportif
                     {
-                        SportifId = userId,
+                        UserId = userId,
                         Age = dto.Age,
                         Poids = dto.Poids,
                         Taille = dto.Taille,
                         Sexe = dto.Sexe,
+                        DateNaissance = dto.DateNaissance,
                         NiveauActivite = dto.NiveauActivite,
                         ObjectifPrincipal = dto.ObjectifPrincipal,
-                        PreferencesAlimentaires = dto.PreferencesAlimentaires,
-                        Allergies = dto.Allergies
+                        PreferencesAlim = dto.PreferencesAlim,  // Use actual property name
+                        Allergies = dto.Allergies,
+                        ProblemesSante = dto.ProblemesSante
                     };
                     _context.ProfilsSportifs.Add(profile);
                 }
                 else
                 {
+                    Console.WriteLine($"[DEBUG] Profile found for user {userId}, updating existing profile");
+                    Console.WriteLine($"[DEBUG] Before update - ObjectifPrincipal: {profile.ObjectifPrincipal}, NiveauActivite: {profile.NiveauActivite}");
+                    
                     // Update existing profile
                     profile.Age = dto.Age;
                     profile.Poids = dto.Poids;
                     profile.Taille = dto.Taille;
                     profile.Sexe = dto.Sexe;
+                    profile.DateNaissance = dto.DateNaissance;
                     profile.NiveauActivite = dto.NiveauActivite;
                     profile.ObjectifPrincipal = dto.ObjectifPrincipal;
-                    profile.PreferencesAlimentaires = dto.PreferencesAlimentaires;
+                    profile.PreferencesAlim = dto.PreferencesAlim;  // Use actual property name
                     profile.Allergies = dto.Allergies;
+                    profile.ProblemesSante = dto.ProblemesSante;
+                    
+                    Console.WriteLine($"[DEBUG] After update - ObjectifPrincipal: {profile.ObjectifPrincipal}, NiveauActivite: {profile.NiveauActivite}");
                 }
 
-                await _context.SaveChangesAsync();
+                var changes = await _context.SaveChangesAsync();
+                Console.WriteLine($"[DEBUG] SaveChangesAsync completed - {changes} entities updated");
 
                 return Ok(new { message = "Profil sportif mis à jour avec succès" });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ERROR] UpdateSportifProfile failed: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Erreur lors de la mise à jour du profil sportif", error = ex.Message });
             }
         }
@@ -435,6 +453,45 @@ namespace YallaFit.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Erreur lors de la suppression de l'utilisateur", error = ex.Message });
+            }
+        }
+
+        [HttpDelete("delete-account")]
+        public async Task<IActionResult> DeleteOwnAccount()
+        {
+            try
+            {   
+                var userId = GetCurrentUserId();
+                Console.WriteLine($"[DEBUG] Delete account request from userId: {userId}");
+                
+                var user = await _context.Utilisateurs
+                    .Include(u => u.ProfilSportif)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "Utilisateur non trouvé" });
+                }
+
+                // Delete related profile if exists
+                if (user.ProfilSportif != null)
+                {
+                    Console.WriteLine($"[DEBUG] Deleting profile for user {userId}");
+                    _context.ProfilsSportifs.Remove(user.ProfilSportif);
+                }
+
+                // Delete user
+                Console.WriteLine($"[DEBUG] Deleting user {userId}");
+                _context.Utilisateurs.Remove(user);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[DEBUG] User {userId} deleted successfully");
+
+                return Ok(new { message = "Compte supprimé avec succès" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Delete account failed: {ex.Message}");
+                return StatusCode(500, new { message = "Erreur lors de la suppression du compte", error = ex.Message });
             }
         }
     }

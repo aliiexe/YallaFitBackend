@@ -33,10 +33,12 @@ namespace YallaFit.DTOs
         public decimal? Poids { get; set; }
         public decimal? Taille { get; set; }
         public string? Sexe { get; set; }
+        public DateTime? DateNaissance { get; set; }
         public string? NiveauActivite { get; set; }
         public string? ObjectifPrincipal { get; set; }
-        public string? PreferencesAlimentaires { get; set; }
+        public string? PreferencesAlim { get; set; }  // Use actual column name, not alias
         public string? Allergies { get; set; }
+        public string? ProblemesSante { get; set; }
     }
 
     public class ChangePasswordDto

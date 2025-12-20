@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using YallaFit.DTOs;
 
 namespace YallaFit.Services
@@ -7,15 +8,16 @@ namespace YallaFit.Services
     public class MistralVisionService
     {
         private readonly HttpClient _httpClient;
-        private const string API_KEY = "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";
+        private readonly string _apiKey;
         private const string BASE_URL = "https://openrouter.ai/api/v1";
-        private const string VISION_MODEL = "mistralai/pixtral-12b:free";
+        private const string VISION_MODEL = "google/gemini-2.0-flash-exp:free";
 
-        public MistralVisionService(HttpClient httpClient)
+        public MistralVisionService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient;
+            _apiKey = configuration["OpenRouter:ApiKey"];
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {API_KEY}");
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
             _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", "https://yallafit.com");
             _httpClient.DefaultRequestHeaders.Add("X-Title", "YallaFit Food Analysis");
         }
@@ -44,7 +46,11 @@ namespace YallaFit.Services
             };
 
             var response = await _httpClient.PostAsJsonAsync($"{BASE_URL}/chat/completions", payload);
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"OpenRouter API Error ({response.StatusCode}): {errorContent}");
+            }
 
             var result = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>();
             return result?.Choices?[0]?.Message?.Content ?? "{}";

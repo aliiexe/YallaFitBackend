@@ -34,6 +34,9 @@ builder.Services.AddCors(options =>
 // Register JWT Service
 builder.Services.AddScoped<YallaFit.Services.IJwtService, YallaFit.Services.JwtService>();
 
+// Register Macro Calculation Service
+builder.Services.AddScoped<YallaFit.Services.MacroCalculationService>();
+
 // Register Mistral AI Service with HttpClient
 builder.Services.AddHttpClient<YallaFit.Services.MistralAIService>();
 

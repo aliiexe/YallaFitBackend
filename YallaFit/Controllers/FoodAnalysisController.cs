@@ -145,6 +145,11 @@ namespace YallaFit.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[Error] AnalyzePhoto failed: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[Error] Inner Exception: {ex.InnerException.Message}");
+                }
                 return StatusCode(500, new { message = "Erreur lors de l'analyse", error = ex.Message });
             }
         }
@@ -256,6 +261,123 @@ namespace YallaFit.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Erreur lors de la suppression", error = ex.Message });
+            }
+        }
+
+        // GET: api/foodanalysis/today
+        [HttpGet("today")]
+        public async Task<IActionResult> GetTodayNutrition()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var today = DateTime.UtcNow.Date;
+                var tomorrow = today.AddDays(1);
+
+                var todayAnalyses = await _context.AnalysesRepasPhoto
+                    .Where(a => a.SportifId == userId && a.DateAnalyse >= today && a.DateAnalyse < tomorrow)
+                    .ToListAsync();
+
+                var summary = new DailyNutritionSummaryDto
+                {
+                    Date = today,
+                    TotalCalories = todayAnalyses.Sum(a => a.CaloriesEstimees),
+                    TotalProtein = todayAnalyses.Sum(a => a.ProteinesEstimees),
+                    TotalCarbs = todayAnalyses.Sum(a => a.GlucidesEstimees),
+                    TotalFats = todayAnalyses.Sum(a => a.LipidesEstimees),
+                    MealCount = todayAnalyses.Count
+                };
+
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur lors de la récupération", error = ex.Message });
+            }
+        }
+
+        // GET: api/foodanalysis/history?startDate=2024-01-01&endDate=2024-01-31
+        [HttpGet("history")]
+        public async Task<IActionResult> GetNutritionHistory([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var start = startDate ?? DateTime.UtcNow.AddDays(-30).Date;
+                var end = endDate ?? DateTime.UtcNow.Date.AddDays(1);
+
+                var analyses = await _context.AnalysesRepasPhoto
+                    .Where(a => a.SportifId == userId && a.DateAnalyse >= start && a.DateAnalyse < end)
+                    .ToListAsync();
+
+                var dailySummaries = analyses
+                    .GroupBy(a => a.DateAnalyse.Date)
+                    .Select(g => new DailyNutritionSummaryDto
+                    {
+                        Date = g.Key,
+                        TotalCalories = g.Sum(a => a.CaloriesEstimees),
+                        TotalProtein = g.Sum(a => a.ProteinesEstimees),
+                        TotalCarbs = g.Sum(a => a.GlucidesEstimees),
+                        TotalFats = g.Sum(a => a.LipidesEstimees),
+                        MealCount = g.Count()
+                    })
+                    .OrderByDescending(s => s.Date)
+                    .ToList();
+
+                return Ok(new NutritionHistoryDto { DailySummaries = dailySummaries });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur lors de la récupération", error = ex.Message });
+            }
+        }
+
+        // GET: api/foodanalysis/daily/2024-12-20
+        [HttpGet("daily/{date}")]
+        public async Task<IActionResult> GetDailyAnalyses(DateTime date)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var dayStart = date.Date;
+                var dayEnd = dayStart.AddDays(1);
+
+                var analyses = await _context.AnalysesRepasPhoto
+                    .Where(a => a.SportifId == userId && a.DateAnalyse >= dayStart && a.DateAnalyse < dayEnd)
+                    .OrderBy(a => a.DateAnalyse)
+                    .ToListAsync();
+
+                var summaries = analyses.Select(a => new FoodAnalysisSummaryDto
+                {
+                    Id = a.Id,
+                    DateAnalyse = a.DateAnalyse,
+                    PhotoPath = a.CheminPhoto,
+                    CaloriesEstimees = a.CaloriesEstimees,
+                    ProteinesEstimees = a.ProteinesEstimees,
+                    FoodCount = !string.IsNullOrEmpty(a.AlimentsDetectes) ?
+                        JsonSerializer.Deserialize<List<DetectedFoodDto>>(a.AlimentsDetectes)!.Count : 0
+                }).ToList();
+
+                var summary = new DailyNutritionSummaryDto
+                {
+                    Date = dayStart,
+                    TotalCalories = analyses.Sum(a => a.CaloriesEstimees),
+                    TotalProtein = analyses.Sum(a => a.ProteinesEstimees),
+                    TotalCarbs = analyses.Sum(a => a.GlucidesEstimees),
+                    TotalFats = analyses.Sum(a => a.LipidesEstimees),
+                    MealCount = analyses.Count
+                };
+
+                return Ok(new DailyAnalysesDto
+                {
+                    Date = dayStart,
+                    Analyses = summaries,
+                    Summary = summary
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur lors de la récupération", error = ex.Message });
             }
         }
     }

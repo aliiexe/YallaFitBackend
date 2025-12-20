@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using YallaFit.Data;
 using YallaFit.DTOs;
+using YallaFit.Services;
 
 namespace YallaFit.Controllers
 {
@@ -13,10 +14,12 @@ namespace YallaFit.Controllers
     public class DashboardController : ControllerBase
     {
         private readonly YallaFitDbContext _context;
+        private readonly MacroCalculationService _macroService;
 
-        public DashboardController(YallaFitDbContext context)
+        public DashboardController(YallaFitDbContext context, MacroCalculationService macroService)
         {
             _context = context;
+            _macroService = macroService;
         }
 
         private int GetCurrentUserId()
@@ -165,11 +168,6 @@ namespace YallaFit.Controllers
                     .OrderByDescending(b => b.DateMesure)
                     .Take(6)
                     .OrderBy(b => b.DateMesure)
-                    .Select(b => new
-                    {
-                        Date = b.DateMesure,
-                        Weight = b.PoidsKg
-                    })
                     .ToListAsync();
 
                 // Calculate BMI if we have height and weight
@@ -192,7 +190,57 @@ namespace YallaFit.Controllers
                 float? weightChange = null;
                 if (biometricHistory.Count >= 2)
                 {
-                    weightChange = latestBiometric.PoidsKg - biometricHistory.First().Weight;
+                    weightChange = latestBiometric.PoidsKg - biometricHistory.First().PoidsKg;
+                }
+
+                // Get week start (Monday)
+                var today = DateTime.UtcNow.Date;
+                var daysSinceMonday = ((int)today.DayOfWeek - 1 + 7) % 7;
+                var weekStart = today.AddDays(-daysSinceMonday);
+                
+                // Count sessions this week
+                var weeklySessions = await _context.TrainingSessions
+                    .Where(ts => ts.SportifId == userId && ts.DateCompleted >= weekStart)
+                    .CountAsync();
+
+                // Calculate current streak
+                var allSessions = await _context.TrainingSessions
+                    .Where(ts => ts.SportifId == userId)
+                    .OrderByDescending(ts => ts.DateCompleted)
+                    .Select(ts => ts.DateCompleted.Date)
+                    .Distinct()
+                    .ToListAsync();
+
+                int currentStreak = 0;
+                int recordStreak = 0;
+                int tempStreak = 0;
+                DateTime? lastDate = null;
+
+                foreach (var sessionDate in allSessions)
+                {
+                    if (lastDate == null || (lastDate.Value - sessionDate).Days == 1)
+                    {
+                        tempStreak++;
+                        if (lastDate == null && sessionDate == today)
+                        {
+                            currentStreak = tempStreak;
+                        }
+                    }
+                    else if ((lastDate.Value - sessionDate).Days > 1)
+                    {
+                        if (currentStreak == 0) currentStreak = tempStreak;
+                        tempStreak = 1;
+                    }
+                    
+                    if (tempStreak > recordStreak) recordStreak = tempStreak;
+                    lastDate = sessionDate;
+                }
+
+                // Calculate daily macro goals
+                DailyMacroGoals? macroGoals = null;
+                if (user.ProfilSportif != null && latestBiometric != null)
+                {
+                    macroGoals = _macroService.CalculateForProfile(user.ProfilSportif, latestBiometric.PoidsKg);
                 }
 
                 var dashboard = new
@@ -206,7 +254,8 @@ namespace YallaFit.Controllers
                         Goal = user.ProfilSportif?.ObjectifPrincipal,
                         ActivityLevel = user.ProfilSportif?.NiveauActivite,
                         DietaryPreferences = user.ProfilSportif?.PreferencesAlim,
-                        Allergies = user.ProfilSportif?.Allergies
+                        Allergies = user.ProfilSportif?.Allergies,
+                        UserId = userId
                     },
                     Biometrics = new
                     {
@@ -222,16 +271,25 @@ namespace YallaFit.Controllers
                     WeightHistory = biometricHistory.Select((b, index) => new
                     {
                         Week = $"S{index + 1}",
-                        Weight = b.Weight,
-                        Date = b.Date
+                        Weight = b.PoidsKg,
+                        Date = b.DateMesure,
+                        BodyFatPercent = b.TauxMasseGrassePercent,
+                        WaistCircumference = b.TourDeTailleCm
                     }).ToList(),
+                    DailyMacroGoals = macroGoals != null ? new
+                    {
+                        Calories = macroGoals.Calories,
+                        Protein = macroGoals.Protein,
+                        Carbs = macroGoals.Carbs,
+                        Fats = macroGoals.Fats
+                    } : null,
                     Stats = new
                     {
-                        WeeklySessions = 0, // TODO: Implement when training tracking is added
+                        WeeklySessions = weeklySessions,
                         WeeklyGoal = 5,
-                        CaloriesBurned = 0, // TODO: Implement when training tracking is added
-                        CurrentStreak = 0, // TODO: Implement when training tracking is added
-                        RecordStreak = 0
+                        CaloriesBurned = 0, // TODO: Implement when calorie tracking per session is added
+                        CurrentStreak = currentStreak,
+                        RecordStreak = recordStreak
                     },
                     AssignedProgram = user.ProfilSportif?.Programme != null ? new
                     {

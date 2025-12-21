@@ -162,6 +162,8 @@ namespace YallaFit.Controllers
                     .OrderByDescending(b => b.DateMesure)
                     .FirstOrDefaultAsync();
 
+                Console.WriteLine($"[DASHBOARD] Latest biometric for user {userId}: Weight={latestBiometric?.PoidsKg}kg, Date={latestBiometric?.DateMesure}");
+
                 // Get biometric history for trend (last 6 entries)
                 var biometricHistory = await _context.BiometriesActuelles
                     .Where(b => b.SportifId == userId)
@@ -190,7 +192,7 @@ namespace YallaFit.Controllers
                 float? weightChange = null;
                 if (biometricHistory.Count >= 2)
                 {
-                    weightChange = latestBiometric.PoidsKg - biometricHistory.First().PoidsKg;
+                    weightChange = latestBiometric.PoidsKg - biometricHistory[biometricHistory.Count - 2].PoidsKg;
                 }
 
                 // Get week start (Monday)
@@ -317,69 +319,169 @@ namespace YallaFit.Controllers
             try
             {
                 var coachId = GetCurrentUserId();
+                var now = DateTime.Now;
+                var last7Days = now.AddDays(-7);
+                var last30Days = now.AddDays(-30);
                 
-                // Get coach stats
-                var totalProgrammes = await _context.Programmes
+                // Get coach's programs WITH seances loaded
+                var coachPrograms = await _context.Programmes
                     .Where(p => p.CoachId == coachId)
-                    .CountAsync();
-
-                var totalAthletes = await _context.Utilisateurs
-                    .Where(u => u.Role == "Sportif")
-                    .CountAsync();
-
-                var totalSessions = await _context.Seances
-                    .Where(s => s.Programme.CoachId == coachId)
-                    .CountAsync();
-
-                // Get my athletes with their latest activity
-                var allSportifs = await _context.Utilisateurs
-                    .Where(u => u.Role == "Sportif")
-                    .Include(u => u.ProfilSportif)
-                    .Take(10)
+                    .Include(p => p.Seances)
                     .ToListAsync();
 
-                var athletes = new List<dynamic>();
-                foreach (var sportif in allSportifs)
-                {
-                    var latestBiometric = await _context.BiometriesActuelles
-                        .Where(b => b.SportifId == sportif.Id)
-                        .OrderByDescending(b => b.DateMesure)
-                        .FirstOrDefaultAsync();
+                var totalProgrammes = coachPrograms.Count;
+                var totalSeancesPlanned = coachPrograms.Sum(p => p.Seances.Count);
 
-                    athletes.Add(new
+                // Get athletes enrolled in coach's programs
+                var enrolledAthletes = await _context.ProgrammeEnrollments
+                    .Where(e => coachPrograms.Select(p => p.Id).Contains(e.ProgrammeId) && e.IsActive)
+                    .Select(e => e.SportifId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var totalAthletes = enrolledAthletes.Count;
+
+                // Get all training sessions for coach's programs
+                var allSessions = await _context.TrainingSessions
+                    .Where(ts => coachPrograms.Select(p => p.Id).Contains(ts.ProgrammeId))
+                    .ToListAsync();
+
+                var totalSessionsCompleted = allSessions.Count;
+                var sessionsLast7Days = allSessions.Count(ts => ts.DateCompleted >= last7Days);
+                var averageDuration = allSessions.Any() ? (int)allSessions.Average(s => s.DurationMinutes) : 0;
+
+                // Calculate overall compliance rate
+                decimal complianceRate = 0;
+                if (totalAthletes > 0 && totalSeancesPlanned > 0)
+                {
+                    var expectedSessions = totalAthletes * totalSeancesPlanned;
+                    complianceRate = expectedSessions > 0 ? (totalSessionsCompleted / (decimal)expectedSessions) * 100 : 0;
+                }
+
+                // Weekly activity data (last 7 days)
+                var weeklyActivity = new List<object>();
+                for (int i = 6; i >= 0; i--)
+                {
+                    var day = now.AddDays(-i).Date;
+                    var dayEnd = day.AddDays(1);
+                    var sessionsOnDay = allSessions.Count(s => s.DateCompleted >= day && s.DateCompleted < dayEnd);
+                    
+                    weeklyActivity.Add(new
                     {
-                        Id = sportif.Id,
-                        NomComplet = sportif.NomComplet,
-                        Email = sportif.Email,
-                        LastWeight = latestBiometric?.PoidsKg,
-                        LastActive = latestBiometric?.DateMesure,
-                        ObjectifPrincipal = sportif.ProfilSportif?.ObjectifPrincipal
+                        day = day.ToString("ddd"),
+                        sessions = sessionsOnDay
                     });
                 }
 
-                // Calculate compliance (mock for now - would need actual session completion data)
-                var athletesWithCompliance = athletes.Select(a => new
+                // Program performance breakdown
+                var programPerformance = new List<object>();
+                foreach (var program in coachPrograms.Take(5))
                 {
-                    a.Id,
-                    a.NomComplet,
-                    a.Email,
-                    Program = a.ObjectifPrincipal ?? "Aucun programme",
-                    Compliance = new Random().Next(70, 95), // Mock data
-                    LastActive = a.LastActive != null 
-                        ? GetTimeAgo(a.LastActive) 
-                        : "Jamais"
-                }).ToList();
+                    var programEnrollments = await _context.ProgrammeEnrollments
+                        .CountAsync(e => e.ProgrammeId == program.Id && e.IsActive);
+                    
+                    var programSessions = allSessions.Count(s => s.ProgrammeId == program.Id);
+                    var expectedSessionsForProgram = programEnrollments * program.Seances.Count;
+                    var programCompletion = expectedSessionsForProgram > 0 
+                        ? (programSessions / (decimal)expectedSessionsForProgram) * 100 
+                        : 0;
+
+                    programPerformance.Add(new
+                    {
+                        name = program.Titre,
+                        enrollments = programEnrollments,
+                        completionRate = Math.Round(programCompletion, 1),
+                        totalSessions = programSessions
+                    });
+                }
+
+
+                // Get detailed athlete info with real compliance rates
+                var athletesWithStats = new List<object>();
+                var athletesForSorting = new List<(int id, string nom, string email, string program, decimal compliance, int sessions, string lastActive)>();
+                
+                foreach (var athleteId in enrolledAthletes.Take(10))
+                {
+                    var sportif = await _context.Utilisateurs
+                        .Include(u => u.ProfilSportif)
+                        .FirstOrDefaultAsync(u => u.Id == athleteId);
+
+                    if (sportif == null) continue;
+
+                    // Get athlete's enrollment to find their program (with Seances loaded)
+                    var enrollment = await _context.ProgrammeEnrollments
+                        .Where(e => e.SportifId == athleteId && e.IsActive)
+                        .Include(e => e.Programme)
+                            .ThenInclude(p => p.Seances)
+                        .FirstOrDefaultAsync();
+
+                    // Get athlete's training sessions
+                    var athleteSessions = allSessions
+                        .Where(ts => ts.SportifId == athleteId)
+                        .ToList();
+
+                    // Get athlete's last activity
+                    var lastSession = athleteSessions
+                        .OrderByDescending(ts => ts.DateCompleted)
+                        .FirstOrDefault();
+
+                    // Calculate individual compliance rate
+                    var programSeances = enrollment?.Programme?.Seances?.Count ?? 0;
+                    var athleteCompliance = programSeances > 0 
+                        ? (athleteSessions.Count / (decimal)programSeances) * 100 
+                        : 0;
+
+                    // Cap compliance at 100%
+                    athleteCompliance = Math.Min(athleteCompliance, 100);
+                    var roundedCompliance = Math.Round(athleteCompliance, 0);
+                    var lastActiveStr = lastSession != null ? GetTimeAgo(lastSession.DateCompleted) : "Jamais";
+                    var programName = enrollment?.Programme?.Titre ?? "Aucun programme actif";
+
+                    athletesWithStats.Add(new
+                    {
+                        id = sportif.Id,
+                        nomComplet = sportif.NomComplet,
+                        email = sportif.Email,
+                        program = programName,
+                        compliance = roundedCompliance,
+                        sessionsCompleted = athleteSessions.Count,
+                        lastActive = lastActiveStr
+                    });
+                    
+                    athletesForSorting.Add((sportif.Id, sportif.NomComplet, sportif.Email, programName, roundedCompliance, athleteSessions.Count, lastActiveStr));
+                }
+
+                // Sort and get top athletes
+                var topAthletesData = athletesForSorting
+                    .OrderByDescending(a =>a.compliance)
+                    .Take(5)
+                    .Select(a => new {
+                        id = a.id,
+                        nomComplet = a.nom,
+                        email = a.email,
+                        program = a.program,
+                        compliance = a.compliance,
+                        sessionsCompleted = a.sessions,
+                        lastActive = a.lastActive
+                    })
+                    .ToList();
 
                 var dashboard = new
                 {
-                    Stats = new
+                    stats = new
                     {
-                        TotalAthletes = totalAthletes,
-                        ActiveProgrammes = totalProgrammes,
-                        TotalSessions = totalSessions,
-                        ComplianceRate = 85.0m // Mock
+                        totalAthletes,
+                        activeProgrammes = totalProgrammes,
+                        totalSessions = totalSessionsCompleted,
+                        complianceRate = Math.Round(complianceRate, 1),
+                        sessionsLast7Days,
+                        totalSeancesPlanned,
+                        averageSessionDuration = averageDuration
                     },
-                    Athletes = athletesWithCompliance
+                    athletes = athletesWithStats,
+                    topAthletes = topAthletesData,
+                    weeklyActivity,
+                    programPerformance
                 };
 
                 return Ok(dashboard);
@@ -389,6 +491,8 @@ namespace YallaFit.Controllers
                 return StatusCode(500, new { message = "Erreur lors de la récupération du tableau de bord coach", error = ex.Message });
             }
         }
+
+
 
         private string GetTimeAgo(DateTime date)
         {

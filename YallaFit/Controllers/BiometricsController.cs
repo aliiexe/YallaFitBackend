@@ -100,7 +100,7 @@ namespace YallaFit.Controllers
                 var biometric = new BiometrieActuelle
                 {
                     SportifId = userId,
-                    DateMesure = dto.DateMesure ?? DateTime.Now,
+                    DateMesure = DateTime.Now, // Always use current time to ensure proper ordering
                     PoidsKg = dto.PoidsKg,
                     TauxMasseGrassePercent = dto.TauxMasseGrassePercent,
                     TourDeTailleCm = dto.TourDeTailleCm
@@ -108,6 +108,8 @@ namespace YallaFit.Controllers
 
                 _context.BiometriesActuelles.Add(biometric);
                 await _context.SaveChangesAsync();
+
+                Console.WriteLine($"[BIOMETRICS] Saved biometric for user {userId}: Weight={biometric.PoidsKg}kg, Date={biometric.DateMesure}");
 
                 return Ok(new
                 {

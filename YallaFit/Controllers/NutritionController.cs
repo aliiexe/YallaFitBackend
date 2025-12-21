@@ -17,11 +17,13 @@ namespace YallaFit.Controllers
     {
         private readonly YallaFitDbContext _context;
         private readonly MistralAIService _mistralService;
+        private readonly MacroCalculationService _macroService;
 
-        public NutritionController(YallaFitDbContext context, MistralAIService mistralService)
+        public NutritionController(YallaFitDbContext context, MistralAIService mistralService, MacroCalculationService macroService)
         {
             _context = context;
             _mistralService = mistralService;
+            _macroService = macroService;
         }
 
         private int GetCurrentUserId()
@@ -48,12 +50,31 @@ namespace YallaFit.Controllers
                     return BadRequest(new { message = "Profil sportif non trouvé" });
                 }
 
-                // Prepare AI request with ALL biometric data
+                // Get latest biometric data for current weight
+                var latestBiometric = await _context.BiometriesActuelles
+                    .Where(b => b.SportifId == userId)
+                    .OrderByDescending(b => b.DateMesure)
+                    .FirstOrDefaultAsync();
+
+                // Calculate daily macro goals using the same service as dashboard
+                DailyMacroGoals? macroGoals = null;
+                if (latestBiometric != null)
+                {
+                    macroGoals = _macroService.CalculateForProfile(user.ProfilSportif, latestBiometric.PoidsKg);
+                }
+
+                // Use calculated macros if available, otherwise use defaults as  fallback
+                int targetCalories = macroGoals != null ? (int)macroGoals.Calories : (request.TargetCalories ?? 2000);
+                int targetProtein = macroGoals != null ? (int)macroGoals.Protein : (request.TargetProtein ?? 150);
+                int targetCarbs = macroGoals != null ? (int)macroGoals.Carbs : (request.TargetCarbs ?? 250);
+                int targetFats = macroGoals != null ? (int)macroGoals.Fats : (request.TargetFats ?? 65);
+
+                // Prepare AI request with calculated macro data
                 var aiRequest = new YallaFit.Services.MealPlanRequestInternal
                 {
                     Age = user.ProfilSportif.Age ?? 30,
                     Gender = user.ProfilSportif.Genre ?? user.ProfilSportif.Sexe,
-                    Weight = (float)(user.ProfilSportif.Poids ?? 70m),
+                    Weight = latestBiometric?.PoidsKg ?? (float)(user.ProfilSportif.Poids ?? 70m),
                     Height = (float)(user.ProfilSportif.Taille ?? 1.75m),
                     Goal = user.ProfilSportif.ObjectifPrincipal ?? "maintenance",
                     ActivityLevel = user.ProfilSportif.NiveauActivite ?? "moderate",
@@ -62,10 +83,10 @@ namespace YallaFit.Controllers
                     FoodPreferences = user.ProfilSportif.PreferencesAlim,
                     HealthIssues = user.ProfilSportif.ProblemesSante,
                     NumberOfMeals = request.NumberOfMeals,
-                    TargetCalories = request.TargetCalories ?? 2000,
-                    TargetProtein = request.TargetProtein ?? 150,
-                    TargetCarbs = request.TargetCarbs ?? 250,
-                    TargetFats = request.TargetFats ?? 65
+                    TargetCalories = targetCalories,
+                    TargetProtein = targetProtein,
+                    TargetCarbs = targetCarbs,
+                    TargetFats = targetFats
                 };
 
                 // Generate meal plan with AI
@@ -103,10 +124,10 @@ namespace YallaFit.Controllers
                 {
                     SportifId = userId,
                     DateGeneration = DateTime.UtcNow,
-                    ObjectifCaloriqueJournalier = aiRequest.TargetCalories,
-                    ObjectifProteinesG = aiRequest.TargetProtein,
-                    ObjectifGlucidesG = aiRequest.TargetCarbs,
-                    ObjectifLipidesG = aiRequest.TargetFats,
+                    ObjectifCaloriqueJournalier = targetCalories,
+                    ObjectifProteinesG = targetProtein,
+                    ObjectifGlucidesG = targetCarbs,
+                    ObjectifLipidesG = targetFats,
                     EstActif = true,
                     AnalyseGlobale = aiPlanResponse.OverallAnalysis,
                     ConseilsPersonnalises = aiPlanResponse.PersonalizedAdvice

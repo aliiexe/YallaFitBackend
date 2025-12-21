@@ -114,8 +114,39 @@ namespace YallaFit.Controllers
                 var biometrics = await _context.BiometriesActuelles
                     .Where(b => b.SportifId == id)
                     .OrderByDescending(b => b.DateMesure)
-                    .Take(10)
                     .ToListAsync();
+
+                var activeEnrollment = await _context.ProgrammeEnrollments
+                    .Include(e => e.Programme)
+                    .FirstOrDefaultAsync(e => e.SportifId == id && e.IsActive);
+
+                object activeProgramData = null;
+                if (activeEnrollment != null)
+                {
+                    var totalSessions = await _context.Seances
+                        .CountAsync(s => s.ProgrammeId == activeEnrollment.ProgrammeId);
+                    
+                    var completedSessions = await _context.TrainingSessions
+                        .CountAsync(s => s.ProgrammeId == activeEnrollment.ProgrammeId && s.SportifId == id);
+
+                    activeProgramData = new
+                    {
+                        Id = activeEnrollment.Programme.Id,
+                        Titre = activeEnrollment.Programme.Titre,
+                        DureeSemaines = activeEnrollment.Programme.DureeSemaines,
+                        StartDate = activeEnrollment.EnrolledAt,
+                        Progress = totalSessions > 0 ? (int)((double)completedSessions / totalSessions * 100) : 0,
+                        CompletedSessions = completedSessions,
+                        TotalSessions = totalSessions
+                    };
+                }
+
+                // Calculate weight change (compare latest with previous measurement)
+                float? weightChange = null;
+                if (biometrics.Count >= 2)
+                {
+                    weightChange = biometrics[0].PoidsKg - biometrics[1].PoidsKg;
+                }
 
                 var details = new
                 {
@@ -124,8 +155,10 @@ namespace YallaFit.Controllers
                     Email = athlete.Email,
                     Profile = athlete.ProfilSportif != null ? new
                     {
-                        Age = athlete.ProfilSportif.Age,
-                        Poids = athlete.ProfilSportif.Poids,
+                        Age = athlete.ProfilSportif.Age ?? (athlete.ProfilSportif.DateNaissance.HasValue 
+                            ? (int?)(DateTime.Today.Year - athlete.ProfilSportif.DateNaissance.Value.Year - (DateTime.Today.DayOfYear < athlete.ProfilSportif.DateNaissance.Value.DayOfYear ? 1 : 0)) 
+                            : null),
+                        Poids = biometrics.Any() ? (decimal)biometrics.First().PoidsKg : athlete.ProfilSportif.Poids,
                         Taille = athlete.ProfilSportif.Taille,
                         Sexe = athlete.ProfilSportif.Sexe,
                         NiveauActivite = athlete.ProfilSportif.NiveauActivite,
@@ -133,6 +166,8 @@ namespace YallaFit.Controllers
                         PreferencesAlimentaires = athlete.ProfilSportif.PreferencesAlim,
                         Allergies = athlete.ProfilSportif.Allergies
                     } : null,
+                    ActiveProgram = activeProgramData,
+                    WeightChange = weightChange,
                     Biometrics = biometrics.Select(b => new
                     {
                         Date = b.DateMesure,

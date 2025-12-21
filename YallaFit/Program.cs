@@ -78,6 +78,10 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<YallaFitDbContext>();
         DbInitializer.Initialize(context);
         Console.WriteLine("✓ Database initialized successfully");
+        
+        // Seed additional data (food items and exercises)
+        await YallaFit.Services.DatabaseSeeder.SeedDatabase(context);
+        Console.WriteLine("✓ Database seeded with food items and exercises");
     }
     catch (Exception ex)
     {
